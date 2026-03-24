@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import './App.css'
-import transactionData from './transactionData'
-import Summary from './Summary'
 import AddTransaction from './AddTransaction'
+import './App.css'
+import Summary from './Summary'
+import transactionData from './transactionData'
 import TransactionList from './TransactionList'
 
 function App() {
   const [transactions, setTransactions] = useState(transactionData);
+  const addTrans = (t) => setTransactions([...transactions, t])
 
   return (
     <div className="app">
@@ -14,7 +15,7 @@ function App() {
       <p className="subtitle">Track your income and expenses</p>
 
       <Summary transactions={transactions} />
-      <AddTransaction onAdd={(t) => setTransactions([...transactions, t])} />
+      <AddTransaction onAdd={addTrans} />
       <TransactionList transactions={transactions} />
     </div>
   );
