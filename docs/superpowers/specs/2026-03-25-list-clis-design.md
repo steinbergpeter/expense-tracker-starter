@@ -4,37 +4,44 @@
 
 ## Overview
 
-A standalone bash script installed at `~/.local/bin/list-clis` that scans `$PATH`, identifies known developer CLIs, and displays them organized by category — mirroring the manual process of listing PATH directories, deduplicating, and categorizing by hand.
+A standalone bash script installed at `~/.local/bin/list-clis` that scans `$PATH`, identifies known developer CLIs using a comprehensive knowledge-driven pattern list, and displays them organized by category. The pattern list is broad enough that most common tools appear automatically when installed — no manual editing required for well-known CLIs.
 
 ## Architecture
 
-Single bash script, no external dependencies.
+Single bash script. Standard POSIX utilities (`chmod`, file tests, directory traversal) are the only dependencies — no external tools required.
 
 **Flow:**
 1. Split `$PATH` into directories
-2. For each directory, iterate files that are executable (`-x -f`)
-3. Deduplicate by name — first occurrence wins (respects PATH priority order)
-4. Pass each name through `categorize()` — a `case` statement with glob patterns
-5. Append matched tools to per-category output buffers
-6. Print categories in fixed display order, skipping empty ones
+2. For each directory that exists and is accessible (`-d` test), iterate files that are executable (`-x -f`). Skip non-existent or unreadable PATH entries silently.
+3. Deduplicate by bare filename — first occurrence wins (respects PATH priority order). Two files named `git` in different directories are treated as the same tool; the first one found is kept.
+4. Pass each name through `categorize()` — a `case` statement using standard bash glob patterns (e.g. `git-*`, `cargo*`). Bare names like `brew` are exact matches. Returns a category string or empty string if unrecognized.
+5. Append matched tool names to per-category buffers — implemented as a bash associative array (`declare -A`) keyed by category name, with values as newline-separated tool name strings.
+6. Print categories in the fixed display order defined in the Categories section below, skipping any category whose buffer is empty. If no tools are recognized at all, the script exits silently with no output. Unrecognized binaries (including the `list-clis` script itself) are simply dropped — no exclusion list is needed.
 
-## Categorization
+## Categories & Display Order
 
-Uses a `categorize()` function with a bash `case` statement and glob patterns. Tools matching no pattern are silently skipped (curated output only — no "Uncategorized" bucket).
+Categories are printed in the order listed in this table. The `categorize()` case statement uses standard bash glob syntax; bare names are exact matches.
 
-| Category | Glob Patterns |
-|---|---|
-| AI & Editors | `claude`, `cursor`, `code`, `console-ninja` |
-| Version Control | `git`, `git-*`, `gh`, `hub-tool`, `scalar` |
-| JavaScript / Node | `node`, `npm`, `npx*`, `nvm`, `n`, `pnpm`, `yarn`, `bun`, `corepack`, `tsc`, `tsserver`, `ts-node*`, `ts-script`, `nodemon`, `ncu`, `npm-check-updates`, `eslint`, `prettier`, `jest`, `create-vite`, `serve`, `json-server`, `express-*` |
-| Python | `python3*`, `pip3*`, `uv`, `uvx`, `sphinx-*` |
-| Go | `go`, `gofmt`, `god` |
-| Rust | `rustc`, `cargo*`, `rustfmt`, `clippy-*`, `rust-*`, `rustdoc` |
-| Database | `psql*`, `pg_*`, `postgres*`, `pscale`, `createdb*`, `dropdb*`, `pgbench*`, `vacuumdb*`, `reindexdb*` |
-| Containers & Cloud | `docker*`, `kubectl*`, `railway`, `ngrok` |
-| Build Tools | `cmake`, `cpack`, `ctest`, `ninja`, `protoc*`, `make`, `automake*`, `autoconf*`, `aclocal*` |
-| Package Managers | `brew` |
-| Utilities | `jq`, `tmux`, `htop`, `openssl`, `op`, `z3`, `pa11y`, `swig*` |
+| # | Category | Patterns |
+|---|---|---|
+| 1 | AI & Editors | `claude`, `cursor`, `code`, `console-ninja`, `aider`, `copilot`, `cody`, `continue` |
+| 2 | Version Control | `git`, `git-*`, `gh`, `hub`, `hub-tool`, `scalar`, `jj`, `fossil`, `svn`, `hg` |
+| 3 | JavaScript / Node | `node`, `npm`, `npx*`, `nvm`, `pnpm`, `yarn`, `bun`, `deno`, `corepack`, `tsc`, `tsserver`, `ts-node*`, `ts-script`, `nodemon`, `ncu`, `npm-check-updates`, `eslint`, `prettier`, `jest`, `vitest`, `mocha`, `cypress`, `webpack`, `rollup`, `esbuild`, `parcel`, `vite`, `turbo`, `nx`, `create-vite`, `create-react-app`, `create-next-app`, `serve`, `json-server`, `express-*` |
+| 4 | Python | `python`, `python3*`, `pip*`, `uv`, `uvx`, `pipenv`, `poetry`, `pyenv`, `conda`, `mamba`, `black`, `ruff`, `flake8`, `mypy`, `pylint`, `isort`, `pytest`, `sphinx-*` |
+| 5 | Go | `go`, `gofmt`, `gopls`, `golangci-lint`, `air`, `goreleaser` |
+| 6 | Rust | `rustc`, `rustup`, `rustfmt`, `rustdoc`, `cargo*`, `clippy-*`, `rust-*` |
+| 7 | Ruby | `ruby`, `gem`, `bundle`, `bundler`, `rails`, `rake`, `rbenv`, `rvm`, `irb`, `pry` |
+| 8 | JVM | `java`, `javac`, `mvn`, `gradle`, `kotlin`, `kotlinc`, `scala`, `sbt`, `groovy` |
+| 9 | Database | `psql*`, `pg_*`, `postgres*`, `pscale`, `createdb*`, `dropdb*`, `pgbench*`, `vacuumdb*`, `reindexdb*`, `mysql`, `mysqldump`, `mariadb`, `sqlite3`, `redis-cli`, `mongosh`, `mongo` |
+| 10 | Containers & Orchestration | `docker*`, `kubectl*`, `helm`, `k9s`, `kind`, `minikube`, `k3s`, `podman`, `buildah`, `skopeo`, `containerd` |
+| 11 | Cloud & Infrastructure | `aws`, `gcloud`, `az`, `doctl`, `fly`, `flyctl`, `railway`, `heroku`, `terraform`, `tofu`, `pulumi`, `ansible*`, `vagrant`, `packer`, `vercel`, `netlify`, `wrangler`, `supabase` |
+| 12 | Build Tools | `cmake`, `cpack`, `ctest`, `ninja`, `make`, `automake*`, `autoconf*`, `aclocal*`, `protoc*`, `bazel`, `meson`, `ant` |
+| 13 | Package Managers | `brew`, `nix`, `snap`, `flatpak` |
+| 14 | Utilities | `jq`, `yq`, `fzf`, `tmux`, `htop`, `btop`, `bat`, `eza`, `fd`, `rg`, `ngrok`, `openssl`, `op`, `stripe`, `z3`, `pa11y`, `swig*` |
+
+**Notes on short/ambiguous patterns:**
+- `op` (1Password CLI) is an intentional exact match — accepted as a known, well-established tool name.
+- Single-character names like `n` (Node version manager) are excluded — too prone to false positives. `nvm` covers the version manager use case.
 
 ## Output Format
 
@@ -54,7 +61,15 @@ Uses a `categorize()` function with a bash `case` statement and glob patterns. T
 - Category header: `── Category Name`
 - Tools indented 2 spaces, sorted alphabetically within each category
 - Blank line between categories
+- No output if no recognized tools are found
 
 ## Installation
 
-Script placed at `~/.local/bin/list-clis` with executable permissions (`chmod +x`). Already on `$PATH` via `~/.local/bin`.
+**Prerequisites:**
+- `~/.local/bin` must exist and be on `$PATH`. On this machine, both are already true.
+
+**Steps:**
+1. Write script to `~/.local/bin/list-clis`
+2. `chmod +x ~/.local/bin/list-clis`
+
+The script is then immediately available as `list-clis` in any new shell session (and the current session, since `~/.local/bin` is already in `$PATH`).
