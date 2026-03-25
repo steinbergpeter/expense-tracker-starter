@@ -8,6 +8,13 @@ function AddTransaction({ onAdd }) {
   const [type, setType] = useState("expense");
   const [category, setCategory] = useState("food");
 
+  const handleReset = () => {
+    setDescription("");
+    setAmount("");
+    setType("expense");
+    setCategory("food");
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!description || !amount) return;
@@ -21,10 +28,7 @@ function AddTransaction({ onAdd }) {
       date: new Date().toISOString().split('T')[0],
     });
 
-    setDescription("");
-    setAmount("");
-    setType("expense");
-    setCategory("food");
+    handleReset();
   };
 
   return (
@@ -52,7 +56,14 @@ function AddTransaction({ onAdd }) {
             <option key={cat} value={cat}>{cat}</option>
           ))}
         </select>
-        <button type="submit">Add</button>
+        <div style={{ width: '100%', display: 'flex', gap: '8px' }}>
+          <button type="button" onClick={handleReset} style={{ background: '#666' }}>Reset</button>
+          <button
+            type="submit"
+            disabled={!description || !amount}
+            style={(!description || !amount) ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+          >Add</button>
+        </div>
       </form>
     </div>
   );
