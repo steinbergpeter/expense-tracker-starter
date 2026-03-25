@@ -110,7 +110,8 @@ form button {
   margin-bottom: 12px;
 }
 
-.filters select {
+.filters select,
+.filters input {
   padding: 6px;
   border: 1px solid #ccc;
   font-size: 13px;
