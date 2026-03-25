@@ -2,34 +2,30 @@ import { useState } from 'react'
 
 const categories = ["food", "housing", "utilities", "transport", "entertainment", "salary", "other"];
 
-function AddTransaction({ onAdd }) {
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
-  const [type, setType] = useState("expense");
-  const [category, setCategory] = useState("food");
+const defaultForm = { description: "", amount: "", type: "expense", category: "food" };
 
-  const handleReset = () => {
-    setDescription("");
-    setAmount("");
-    setType("expense");
-    setCategory("food");
-  };
+function AddTransaction({ onAdd }) {
+  const [form, setForm] = useState(defaultForm);
+
+  const handleReset = () => setForm(defaultForm);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!description || !amount) return;
+    if (!form.description || !form.amount) return;
 
     onAdd({
       id: Date.now(),
-      description,
-      amount: parseFloat(amount),
-      type,
-      category,
+      description: form.description,
+      amount: parseFloat(form.amount),
+      type: form.type,
+      category: form.category,
       date: new Date().toISOString().split('T')[0],
     });
 
     handleReset();
   };
+
+  const handleChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
   return (
     <div className="add-transaction">
@@ -37,21 +33,23 @@ function AddTransaction({ onAdd }) {
       <form onSubmit={handleSubmit}>
         <input
           type="text"
+          name="description"
           placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          value={form.description}
+          onChange={handleChange}
         />
         <input
           type="number"
+          name="amount"
           placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          value={form.amount}
+          onChange={handleChange}
         />
-        <select value={type} onChange={(e) => setType(e.target.value)}>
+        <select name="type" value={form.type} onChange={handleChange}>
           <option value="income">Income</option>
           <option value="expense">Expense</option>
         </select>
-        <select value={category} onChange={(e) => setCategory(e.target.value)}>
+        <select name="category" value={form.category} onChange={handleChange}>
           {categories.map(cat => (
             <option key={cat} value={cat}>{cat}</option>
           ))}
@@ -60,8 +58,8 @@ function AddTransaction({ onAdd }) {
           <button type="button" onClick={handleReset} style={{ background: '#666' }}>Reset</button>
           <button
             type="submit"
-            disabled={!description || !amount}
-            style={(!description || !amount) ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+            disabled={!form.description || !form.amount}
+            style={(!form.description || !form.amount) ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
           >Add</button>
         </div>
       </form>
