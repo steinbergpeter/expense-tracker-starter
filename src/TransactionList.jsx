@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 
 const categories = ["food", "housing", "utilities", "transport", "entertainment", "salary", "other"];
 
-function TransactionList({ transactions }) {
+function TransactionList({ transactions, onDelete }) {
   const [filterType, setFilterType] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
   const [search, setSearch] = useState("");
@@ -85,6 +85,7 @@ function TransactionList({ transactions }) {
                 {label}{sortIndicator(col)}
               </th>
             ))}
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -95,6 +96,11 @@ function TransactionList({ transactions }) {
               <td>{t.category}</td>
               <td className={t.type === "income" ? "income-amount" : "expense-amount"}>
                 {t.type === "income" ? "+" : "-"}${t.amount}
+              </td>
+              <td>
+                <button className="delete-btn" onClick={() => {
+                  if (window.confirm("Delete this transaction?")) onDelete(t.id);
+                }}>Delete</button>
               </td>
             </tr>
           ))}

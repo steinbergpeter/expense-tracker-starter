@@ -8,6 +8,7 @@ import TransactionList from './TransactionList'
 function App() {
   const [transactions, setTransactions] = useState(transactionData);
   const addTrans = (t) => setTransactions([...transactions, t])
+  const deleteTransaction = (id) => setTransactions(transactions.filter(t => t.id !== id))
 
   return (
     <div className="app">
@@ -16,7 +17,7 @@ function App() {
 
       <Summary transactions={transactions} />
       <AddTransaction onAdd={addTrans} />
-      <TransactionList transactions={transactions} />
+      <TransactionList transactions={transactions} onDelete={deleteTransaction} />
     </div>
   );
 }
